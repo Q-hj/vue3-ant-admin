@@ -1,4 +1,4 @@
-import type { Column } from "@/components/ProTable";
+import type { Column } from "@/components/ProTable/ProTable.vue";
 export const columns = [
   {
     label: "序号",

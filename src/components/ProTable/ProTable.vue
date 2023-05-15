@@ -2,6 +2,7 @@
 import { reactive, h } from "vue";
 import { message, Modal } from "ant-design-vue";
 import { get, post } from "@/api/http";
+import { isFn } from "@/types/is";
 
 export interface Column {
   label: string;
@@ -13,7 +14,7 @@ export interface Column {
 interface Operates {
   编辑?: (T: any) => void;
   详情?: (T: any) => void;
-  删除?: string | ((T: any) => void);
+  删除?: string | (() => void);
 }
 
 export interface Props {
@@ -31,22 +32,22 @@ const operateLabels = Object.keys(props.operate);
 
 const delLoading: boolean = false;
 
-const isFn = (val: unknown) => toString.call(val) === `[object Function]`;
-const onDelete = () => {
-  const delFnOrPath = props.operate["删除"];
-  if (isFn(delFnOrPath)) {
-    delFnOrPath();
-    return;
+const onDelete = ({ id }: any) => {
+  const deleteWay = props.operate["删除"]!;
+
+  if (isFn(deleteWay)) {
+    deleteWay();
+  } else {
+    // 可以传入删除接口名称 来完成删除逻辑
+    post(deleteWay, { id }, "删除", delLoading).then(() => {
+      emit("afterOperate");
+    });
   }
-  // 可以传入删除接口名称 来完成删除逻辑
-  post(delFnOrPath, {}, "删除", delLoading).then(() => {
-    emit("afterOperate");
-  });
 };
 const handleDelete = (row: any) => {
   Modal.warning({
     title: "提示",
-    onOk: onDelete,
+    onOk: () => onDelete(row),
     centered: true,
     closable: true,
     content: () =>
